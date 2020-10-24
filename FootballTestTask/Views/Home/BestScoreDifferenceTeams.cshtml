@@ -1,0 +1,5 @@
+﻿@model List<Team>
+@foreach (var item in Model)
+{
+	<h3>The best score difference team @item.LeagueName - @item.TeamName with difference @item.GoalsDifference goals</h3>
+}
