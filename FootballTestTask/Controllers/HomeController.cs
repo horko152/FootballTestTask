@@ -12,13 +12,21 @@ namespace FootballTestTask.Controllers
 {
 	public class HomeController : Controller
 	{
+        /// <summary>
+        /// Reading data of leagues from json files
+        /// </summary>
 		public League league1 = JsonConvert.DeserializeObject<League>(System.IO.File.ReadAllText(@".\Data\en.1.json"));
 		public League league2 = JsonConvert.DeserializeObject<League>(System.IO.File.ReadAllText(@".\Data\en.2.json"));
 		public League league3 = JsonConvert.DeserializeObject<League>(System.IO.File.ReadAllText(@".\Data\en.3.json"));
+        /// <summary>
+        /// Global variables
+        /// </summary>
         List<League> leagues = new List<League>();
         List<Team> teams = new List<Team>();
         List<EffectiveDay> days = new List<EffectiveDay>();
-        [HttpGet]
+
+		#region Controller methods
+		[HttpGet]
 		public IActionResult Index()
 		{
             ViewBag.Message = "Football Statictic";
@@ -118,7 +126,34 @@ namespace FootballTestTask.Controllers
         public IActionResult TheMostEffectiveDay()
 		{
             InitializeLeagues();
-            InitializeTeams("effectiveday");
+
+            var stat = new Dictionary<string, int>();
+
+            foreach (var league in leagues)
+            {
+
+                foreach (var match in league.Matches)
+                {
+                    var day = new EffectiveDay();
+
+                    if (stat.ContainsKey(match.Date))
+                    {
+                        stat[match.Date] += match.Score.Ft[0] + match.Score.Ft[1];
+                    }
+                    else
+                    {
+                        stat.Add(match.Date, match.Score.Ft[0] + match.Score.Ft[1]);
+                    }
+                }
+
+                foreach (var item in stat)
+                {
+                    var day = new EffectiveDay();
+                    day.Date = item.Key;
+                    day.Goals = item.Value;
+                    days.Add(day);
+                }
+            }
 
             int theMostGoalsInLeaguesInADay = 0;
 
@@ -133,8 +168,10 @@ namespace FootballTestTask.Controllers
 
             return View(theMostEffectiveDay);
 		}
+		#endregion
 
-        private void InitializeLeagues()
+		#region Additional methods
+		private void InitializeLeagues()
 		{
             leagues.Add(league1);
             leagues.Add(league2);
@@ -164,8 +201,8 @@ namespace FootballTestTask.Controllers
                             stat.Add(match.Team2, match.Score.Ft[1]);
                         }
                     }
-                    else if(whichTeams == "defensive")
-					{
+                    else if (whichTeams == "defensive")
+                    {
                         if (stat.ContainsKey(match.Team1))
                         {
                             stat[match.Team1] += match.Score.Ft[1];
@@ -180,8 +217,8 @@ namespace FootballTestTask.Controllers
                             stat.Add(match.Team2, match.Score.Ft[0]);
                         }
                     }
-					else if(whichTeams == "difference")
-					{
+                    else if (whichTeams == "difference")
+                    {
                         int firstDifference = match.Score.Ft[0] - match.Score.Ft[1];
                         int secondDifference = match.Score.Ft[1] - match.Score.Ft[0];
                         if (stat.ContainsKey(match.Team1))
@@ -198,18 +235,10 @@ namespace FootballTestTask.Controllers
                             stat.Add(match.Team2, secondDifference);
                         }
                     }
-                    else
+					else
 					{
-                        if (stat.ContainsKey(match.Date))
-                        {
-                            stat[match.Date] += match.Score.Ft[0] + match.Score.Ft[1]; 
-                        }
-                        else
-                        {
-                            stat.Add(match.Date, match.Score.Ft[0] + match.Score.Ft[1]);
-                        }
-                    }
-
+                        return;
+					}
                 }
 
                 foreach (var item in stat)
@@ -240,15 +269,13 @@ namespace FootballTestTask.Controllers
                     }
 					else
 					{
-                        var day = new EffectiveDay();
-                        day.Date = item.Key;
-                        day.Goals = item.Value;
-                        days.Add(day);
+                        return;
 					}
                 }
 
                 stat.Clear();
             }
         }
-    }
+		#endregion
+	}
 }
